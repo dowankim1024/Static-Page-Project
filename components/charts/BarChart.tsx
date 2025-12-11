@@ -2,6 +2,7 @@
 
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { DayOfWeekData, TimeSlotData } from '@/types/crime';
+import { formatTimeSlotLabel } from '@/lib/dataFormatters';
 
 interface BarChartProps {
   data: DayOfWeekData[] | TimeSlotData[];
@@ -15,11 +16,7 @@ export default function BarChart({ data, dataKey, xAxisKey, title }: BarChartPro
   const formattedData = data.map((item) => {
     if (xAxisKey === 'time') {
       const timeItem = item as TimeSlotData;
-      // "0시00분-02시59분" -> "0-3시" 형태로 변환
-      const timeLabel = timeItem.time
-        .replace('시00분-', '-')
-        .replace('시59분', '시')
-        .split('-')[0] + '시';
+      const timeLabel = formatTimeSlotLabel(timeItem.time, true);
       return { ...item, timeLabel };
     }
     return item;

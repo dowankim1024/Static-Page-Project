@@ -1,4 +1,5 @@
 import { parseCrimeData, calculateDashboardStats } from '@/lib/csvParser';
+import { convertCrimeRecordsToTableData, extractCategoryMiddleList } from '@/lib/dataFormatters';
 import SearchBar from '@/components/SearchBar';
 import CrimeList from '@/components/CrimeList';
 import BarChart from '@/components/charts/BarChart';
@@ -13,14 +14,10 @@ export default function Dashboard() {
   const stats = calculateDashboardStats(records);
   
   // 검색용 범죄 목록 (중분류만)
-  const crimeList = records.map((record) => record.categoryMiddle);
+  const crimeList = extractCategoryMiddleList(records);
   
   // 범죄 목록 데이터 (테이블용)
-  const crimeListData = records.map((record) => ({
-    categoryMajor: record.categoryMajor,
-    categoryMiddle: record.categoryMiddle,
-    total: record.total,
-  }));
+  const crimeListData = convertCrimeRecordsToTableData(records);
 
   return (
     <div className="bg-gray-50">

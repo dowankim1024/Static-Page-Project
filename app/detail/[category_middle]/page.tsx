@@ -13,7 +13,6 @@ interface DetailPageProps {
 }
 
 export default async function DetailPage({ params }: DetailPageProps) {
-  // URL 파라미터에서 범죄 유형을 가져옴 (Next.js 15+에서는 params가 Promise)
   const { category_middle } = await params;
   const categoryName = decodeURIComponent(category_middle);
   

@@ -2,6 +2,7 @@
 
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TimeSlotData } from '@/types/crime';
+import { formatTimeSlotLabel } from '@/lib/dataFormatters';
 
 interface LineChartProps {
   data: TimeSlotData[];
@@ -11,10 +12,7 @@ interface LineChartProps {
 export default function LineChart({ data, title }: LineChartProps) {
   // 시간대 라벨 단축
   const formattedData = data.map((item) => {
-    const timeLabel = item.time
-      .replace('시00분-', '-')
-      .replace('시59분', '시')
-      .split('-')[0] + '시';
+    const timeLabel = formatTimeSlotLabel(item.time, true);
     return { ...item, timeLabel };
   });
 

@@ -9,6 +9,7 @@ import {
   DayOfWeekData,
   CategoryMajorData,
 } from '@/types/crime';
+import { TIME_SLOT_ORDER, DAY_ORDER } from './dataFormatters';
 
 // CSV 파일에서 범죄 데이터 읽기
 export function parseCrimeData(): CrimeRecord[] {
@@ -32,23 +33,15 @@ export function parseCrimeData(): CrimeRecord[] {
   
   // 시간대 컬럼 인덱스 찾기
   const timeSlotColumns: Array<{ slot: TimeSlot; idx: number }> = [
-    '0시00분-02시59분',
-    '03시00분-05시59분',
-    '06시00분-08시59분',
-    '09시00분-11시59분',
-    '12시00분-14시59분',
-    '15시00분-17시59분',
-    '18시00분-20시59분',
-    '21시00분-23시59분',
-    '미상',
+    ...TIME_SLOT_ORDER,
+    '미상' as TimeSlot,
   ].map((slot) => ({
     slot: slot as TimeSlot,
     idx: headers.indexOf(slot),
   }));
   
   // 요일 컬럼 인덱스 찾기
-  const daysOfWeek: DayOfWeek[] = ['일', '월', '화', '수', '목', '금', '토'];
-  const dayColumns: Array<{ day: DayOfWeek; idx: number }> = daysOfWeek.map((day) => ({
+  const dayColumns: Array<{ day: DayOfWeek; idx: number }> = DAY_ORDER.map((day) => ({
     day,
     idx: headers.indexOf(day),
   }));
@@ -125,22 +118,10 @@ export function calculateDashboardStats(records: CrimeRecord[]): DashboardStats 
     });
   });
   
-  const timeSlotTotals: TimeSlotData[] = [
-    '0시00분-02시59분',
-    '03시00분-05시59분',
-    '06시00분-08시59분',
-    '09시00분-11시59분',
-    '12시00분-14시59분',
-    '15시00분-17시59분',
-    '18시00분-20시59분',
-    '21시00분-23시59분',
-    '미상',
-  ]
-    .map((slot) => ({
-      time: slot,
-      count: timeSlotMap.get(slot) || 0,
-    }))
-    .filter((item) => item.time !== '미상'); // 미상 제외
+  const timeSlotTotals: TimeSlotData[] = TIME_SLOT_ORDER.map((slot) => ({
+    time: slot,
+    count: timeSlotMap.get(slot) || 0,
+  }));
   
   // 요일별 전체 합계
   const dayMap = new Map<DayOfWeek, number>();
@@ -151,8 +132,7 @@ export function calculateDashboardStats(records: CrimeRecord[]): DashboardStats 
     });
   });
   
-  const dayOrder: DayOfWeek[] = ['일', '월', '화', '수', '목', '금', '토'];
-  const dayOfWeekTotals: DayOfWeekData[] = dayOrder.map((day) => ({
+  const dayOfWeekTotals: DayOfWeekData[] = DAY_ORDER.map((day) => ({
     day,
     count: dayMap.get(day) || 0,
   }));
@@ -194,18 +174,7 @@ export function calculateAverageStats(records: CrimeRecord[]): {
     });
   });
   
-  const timeSlotOrder = [
-    '0시00분-02시59분',
-    '03시00분-05시59분',
-    '06시00분-08시59분',
-    '09시00분-11시59분',
-    '12시00분-14시59분',
-    '15시00분-17시59분',
-    '18시00분-20시59분',
-    '21시00분-23시59분',
-  ];
-  
-  const timeSlotAverages: TimeSlotData[] = timeSlotOrder.map((slot) => ({
+  const timeSlotAverages: TimeSlotData[] = TIME_SLOT_ORDER.map((slot) => ({
     time: slot,
     count: Math.round((timeSlotSum.get(slot) || 0) / recordCount),
   }));
@@ -219,8 +188,7 @@ export function calculateAverageStats(records: CrimeRecord[]): {
     });
   });
   
-  const dayOrder: DayOfWeek[] = ['일', '월', '화', '수', '목', '금', '토'];
-  const dayOfWeekAverages: DayOfWeekData[] = dayOrder.map((day) => ({
+  const dayOfWeekAverages: DayOfWeekData[] = DAY_ORDER.map((day) => ({
     day,
     count: Math.round((daySum.get(day) || 0) / recordCount),
   }));

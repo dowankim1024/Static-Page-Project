@@ -2,6 +2,7 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { DayOfWeekData, TimeSlotData } from '@/types/crime';
+import { formatTimeSlotLabel } from '@/lib/dataFormatters';
 
 interface ComparisonChartProps {
   data: DayOfWeekData[] | TimeSlotData[];
@@ -33,11 +34,7 @@ export default function ComparisonChart({
     // 시간대 데이터인 경우 라벨 단축
     if (xAxisKey === 'time') {
       const timeItem = item as TimeSlotData;
-      const timeLabel = timeItem.time
-        .replace('시00분-', '-')
-        .replace('시59분', '시')
-        .split('-')[0] + '시';
-      baseItem.timeLabel = timeLabel;
+      baseItem.timeLabel = formatTimeSlotLabel(timeItem.time, true);
     }
     
     return baseItem;
