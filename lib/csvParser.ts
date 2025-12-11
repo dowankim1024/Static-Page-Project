@@ -176,6 +176,61 @@ export function calculateDashboardStats(records: CrimeRecord[]): DashboardStats 
   };
 }
 
+// 전체 평균 계산 (비교 차트용)
+export function calculateAverageStats(records: CrimeRecord[]): {
+  timeSlotAverages: TimeSlotData[];
+  dayOfWeekAverages: DayOfWeekData[];
+} {
+  const recordCount = records.length;
+  
+  // 시간대별 평균
+  const timeSlotSum = new Map<string, number>();
+  records.forEach((record) => {
+    Object.entries(record.timeSlots).forEach(([slot, count]) => {
+      if (slot !== '미상') {
+        const current = timeSlotSum.get(slot) || 0;
+        timeSlotSum.set(slot, current + count);
+      }
+    });
+  });
+  
+  const timeSlotOrder = [
+    '0시00분-02시59분',
+    '03시00분-05시59분',
+    '06시00분-08시59분',
+    '09시00분-11시59분',
+    '12시00분-14시59분',
+    '15시00분-17시59분',
+    '18시00분-20시59분',
+    '21시00분-23시59분',
+  ];
+  
+  const timeSlotAverages: TimeSlotData[] = timeSlotOrder.map((slot) => ({
+    time: slot,
+    count: Math.round((timeSlotSum.get(slot) || 0) / recordCount),
+  }));
+  
+  // 요일별 평균
+  const daySum = new Map<DayOfWeek, number>();
+  records.forEach((record) => {
+    Object.entries(record.daysOfWeek).forEach(([day, count]) => {
+      const current = daySum.get(day as DayOfWeek) || 0;
+      daySum.set(day as DayOfWeek, current + count);
+    });
+  });
+  
+  const dayOrder: DayOfWeek[] = ['일', '월', '화', '수', '목', '금', '토'];
+  const dayOfWeekAverages: DayOfWeekData[] = dayOrder.map((day) => ({
+    day,
+    count: Math.round((daySum.get(day) || 0) / recordCount),
+  }));
+  
+  return {
+    timeSlotAverages,
+    dayOfWeekAverages,
+  };
+}
+
 // 범죄 중분류로 데이터 찾기
 export function findCrimeByCategoryMiddle(
   records: CrimeRecord[],
@@ -193,4 +248,3 @@ export function findCrimesByCategoryMajor(
 ): CrimeRecord[] {
   return records.filter((record) => record.categoryMajor === categoryMajor);
 }
-

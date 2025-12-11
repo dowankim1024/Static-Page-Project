@@ -20,9 +20,11 @@ const COLORS = [
   '#f3f4f6', // gray-100
 ];
 
+type PieChartData = CategoryMajorData & Record<string, string | number>;
+
 export default function PieChart({ data, title }: PieChartProps) {
   // 상위 7개만 표시하고 나머지는 "기타"로 합침
-  const displayData = data.length > 7
+  const displayData: PieChartData[] = (data.length > 7
     ? [
         ...data.slice(0, 7),
         {
@@ -30,12 +32,14 @@ export default function PieChart({ data, title }: PieChartProps) {
           count: data.slice(7).reduce((sum, item) => sum + item.count, 0),
         },
       ]
-    : data;
+    : data) as PieChartData[];
 
-  const renderLabel = (entry: CategoryMajorData) => {
-    const total = displayData.reduce((sum, item) => sum + item.count, 0);
-    const percentage = ((entry.count / total) * 100).toFixed(1);
-    return `${entry.category} (${percentage}%)`;
+  const total = displayData.reduce((sum, item) => sum + item.count, 0);
+  
+  const renderLabel = (props: { name?: string; value?: number; percent?: number }) => {
+    if (!props.name || props.percent === undefined) return '';
+    const percentage = (props.percent * 100).toFixed(1);
+    return `${props.name} (${percentage}%)`;
   };
 
   return (
@@ -67,10 +71,9 @@ export default function PieChart({ data, title }: PieChartProps) {
           <Legend 
             verticalAlign="bottom"
             height={36}
-            formatter={(value) => {
+            formatter={(value: string) => {
               const item = displayData.find((d) => d.category === value);
               if (!item) return value;
-              const total = displayData.reduce((sum, d) => sum + d.count, 0);
               const percentage = ((item.count / total) * 100).toFixed(1);
               return `${value} (${percentage}%)`;
             }}
