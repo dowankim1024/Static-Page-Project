@@ -2,6 +2,10 @@
 
 범죄 발생의 시간적, 요일별 패턴을 분석하고, 사용자가 특정 범죄 유형을 검색하여 상세 통계를 확인할 수 있는 정적 웹사이트입니다.
 
+GitHub: [https://github.com/dowankim1024/Static-Page-Project](https://github.com/dowankim1024/Static-Page-Project)
+
+개발 블로그 : [https://dowankim.site/blog/%EC%A0%95%EC%A0%81%20%EC%9D%B8%ED%84%B0%EB%9E%99%ED%8B%B0%EB%B8%8C%20%EB%8C%80%EC%8B%9C%EB%B3%B4%EB%93%9C](https://dowankim.site/blog/%EC%A0%95%EC%A0%81%20%EC%9D%B8%ED%84%B0%EB%9E%99%ED%8B%B0%EB%B8%8C%20%EB%8C%80%EC%8B%9C%EB%B3%B4%EB%93%9C)
+
 ## 🌐 배포 링크
 
 **프로덕션 사이트**: [https://crime-insight.vercel.app](https://crime-insight.vercel.app)
