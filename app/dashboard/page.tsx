@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { parseCrimeData, calculateDashboardStats } from '@/lib/csvParser';
 import { convertCrimeRecordsToTableData, extractCategoryMiddleList } from '@/lib/dataFormatters';
 import SearchBar from '@/components/SearchBar';
@@ -7,6 +8,15 @@ import ChartCard from '@/components/ChartCard';
 import BarChart from '@/components/charts/BarChart';
 import LineChart from '@/components/charts/LineChart';
 import PieChart from '@/components/charts/PieChart';
+
+export const metadata: Metadata = {
+  title: "대시보드",
+  description: "범죄 발생 통계 대시보드. 요일별, 시간대별 범죄 발생 현황을 차트로 확인하고, 범죄 유형별 상세 통계를 검색할 수 있습니다.",
+  openGraph: {
+    title: "범죄 통계 대시보드 | Crime Insight 2019",
+    description: "요일별, 시간대별 범죄 발생 현황과 범죄 대분류 비중을 시각화한 대시보드",
+  },
+};
 
 export default function Dashboard() {
   // CSV 데이터 파싱

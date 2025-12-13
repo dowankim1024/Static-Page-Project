@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "홈",
+  description: "범죄 발생의 시간적, 요일별 패턴을 분석하여 데이터 기반 인사이트를 제공합니다. 2019년 경찰청 범죄 데이터를 기반으로 한 종합 분석 대시보드입니다.",
+  openGraph: {
+    title: "Crime Insight 2019 - 범죄 발생 패턴 분석",
+    description: "언제, 어디서 범죄가 가장 많이 발생할까? 2019년 경찰청 범죄 데이터를 기반으로 한 종합 분석 대시보드",
+  },
+};
 
 export default function Home() {
   return (

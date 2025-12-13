@@ -1,3 +1,14 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "프로젝트 소개",
+  description: "Crime Insight 2019 프로젝트 소개. 공공데이터포털 경찰청 범죄 발생 시간대 및 요일 데이터를 기반으로 한 범죄 통계 분석 대시보드입니다. Next.js, TypeScript, Recharts를 활용하여 구현되었습니다.",
+  openGraph: {
+    title: "프로젝트 소개 | Crime Insight 2019",
+    description: "공공데이터포털 경찰청 범죄 발생 데이터를 기반으로 한 범죄 통계 분석 대시보드 프로젝트 소개",
+  },
+};
+
 export default function About() {
   return (
     <div className="bg-gray-50">

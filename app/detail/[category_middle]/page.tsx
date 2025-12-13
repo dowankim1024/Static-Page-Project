@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { parseCrimeData, findCrimeByCategoryMiddle, calculateAverageStats } from '@/lib/csvParser';
 import {
   convertCrimeRecordsToTableData,
@@ -18,6 +19,38 @@ interface DetailPageProps {
   params: Promise<{
     category_middle: string;
   }>;
+}
+
+// 동적 메타데이터 생성
+export async function generateMetadata({ params }: DetailPageProps): Promise<Metadata> {
+  const { category_middle } = await params;
+  const categoryName = decodeURIComponent(category_middle);
+  
+  const records = parseCrimeData();
+  const crimeData = findCrimeByCategoryMiddle(records, categoryName);
+  
+  if (!crimeData) {
+    return {
+      title: "페이지를 찾을 수 없습니다",
+      description: "요청하신 범죄 유형을 찾을 수 없습니다.",
+    };
+  }
+  
+  return {
+    title: `${categoryName} 범죄 분석`,
+    description: `${categoryName} 범죄의 시간대별, 요일별 발생 패턴을 분석한 상세 통계. 전체 범죄 평균과 비교하여 ${categoryName} 범죄의 특성을 확인할 수 있습니다. 총 ${crimeData.total.toLocaleString()}건의 데이터를 분석했습니다.`,
+    keywords: [categoryName, "범죄 통계", "범죄 분석", crimeData.categoryMajor],
+    openGraph: {
+      title: `${categoryName} 범죄 분석 보고서 | Crime Insight 2019`,
+      description: `${categoryName} 범죄의 시간대별, 요일별 발생 패턴과 전체 평균과의 비교 분석`,
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${categoryName} 범죄 분석`,
+      description: `${categoryName} 범죄 발생 패턴 분석 - 총 ${crimeData.total.toLocaleString()}건`,
+    },
+  };
 }
 
 // 정적 페이지 생성을 위한 경로 생성

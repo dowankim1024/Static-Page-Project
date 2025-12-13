@@ -13,82 +13,118 @@ import { TIME_SLOT_ORDER, DAY_ORDER } from './dataFormatters';
 
 // CSV 파일에서 범죄 데이터 읽기
 export function parseCrimeData(): CrimeRecord[] {
-  const filePath = path.join(process.cwd(), 'data', 'crime_data.csv');
-  const fileContents = fs.readFileSync(filePath, 'utf-8');
-  
-  // \r\n 또는 \n으로 줄바꿈 처리하고, 각 줄의 \r 제거
-  const lines = fileContents
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0);
-  
-  // 헤더에서 각 컬럼의 앞뒤 공백 제거
-  const headers = lines[0].split(',').map(header => header.trim());
-  
-  // 헤더 인덱스 찾기
-  const categoryMajorIdx = headers.indexOf('범죄대분류');
-  const categoryMiddleIdx = headers.indexOf('범죄중분류');
-  
-  // 시간대 컬럼 인덱스 찾기
-  const timeSlotColumns: Array<{ slot: TimeSlot; idx: number }> = [
-    ...TIME_SLOT_ORDER,
-    '미상' as TimeSlot,
-  ].map((slot) => ({
-    slot: slot as TimeSlot,
-    idx: headers.indexOf(slot),
-  }));
-  
-  // 요일 컬럼 인덱스 찾기
-  const dayColumns: Array<{ day: DayOfWeek; idx: number }> = DAY_ORDER.map((day) => ({
-    day,
-    idx: headers.indexOf(day),
-  }));
-  
-  // 데이터 파싱
-  const records: CrimeRecord[] = [];
-  
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line) continue;
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'crime_data.csv');
     
-    // 각 값의 앞뒤 공백 제거
-    const values = line.split(',').map(value => value.trim());
-    
-    const categoryMajor = values[categoryMajorIdx];
-    const categoryMiddle = values[categoryMiddleIdx];
-    
-    // 시간대별 데이터 파싱
-    const timeSlots: Record<TimeSlot, number> = {} as Record<TimeSlot, number>;
-    let timeSlotTotal = 0;
-    
-    for (const { slot, idx } of timeSlotColumns) {
-      const count = parseInt(values[idx] || '0', 10);
-      timeSlots[slot] = count;
-      timeSlotTotal += count;
+    // 파일 존재 여부 확인
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`CSV 파일을 찾을 수 없습니다: ${filePath}`);
     }
     
-    // 요일별 데이터 파싱
-    const daysOfWeekData: Record<DayOfWeek, number> = {} as Record<DayOfWeek, number>;
-    let dayTotal = 0;
+    const fileContents = fs.readFileSync(filePath, 'utf-8');
+  
+    // \r\n 또는 \n으로 줄바꿈 처리하고, 각 줄의 \r 제거
+    const lines = fileContents
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
     
-    for (const { day, idx } of dayColumns) {
-      const count = parseInt(values[idx] || '0', 10);
-      daysOfWeekData[day] = count;
-      dayTotal += count;
+    if (lines.length === 0) {
+      throw new Error('CSV 파일이 비어있습니다.');
     }
     
-    records.push({
-      categoryMajor,
-      categoryMiddle,
-      timeSlots,
-      daysOfWeek: daysOfWeekData,
-      total: timeSlotTotal + dayTotal,
-    });
+    // 헤더에서 각 컬럼의 앞뒤 공백 제거
+    const headers = lines[0].split(',').map(header => header.trim());
+    
+    // 헤더 인덱스 찾기
+    const categoryMajorIdx = headers.indexOf('범죄대분류');
+    const categoryMiddleIdx = headers.indexOf('범죄중분류');
+    
+    if (categoryMajorIdx === -1 || categoryMiddleIdx === -1) {
+      throw new Error('CSV 파일의 필수 컬럼(범죄대분류, 범죄중분류)을 찾을 수 없습니다.');
+    }
+    
+    // 시간대 컬럼 인덱스 찾기
+    const timeSlotColumns: Array<{ slot: TimeSlot; idx: number }> = [
+      ...TIME_SLOT_ORDER,
+      '미상' as TimeSlot,
+    ].map((slot) => ({
+      slot: slot as TimeSlot,
+      idx: headers.indexOf(slot),
+    }));
+    
+    // 요일 컬럼 인덱스 찾기
+    const dayColumns: Array<{ day: DayOfWeek; idx: number }> = DAY_ORDER.map((day) => ({
+      day,
+      idx: headers.indexOf(day),
+    }));
+    
+    // 데이터 파싱
+    const records: CrimeRecord[] = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line) continue;
+      
+      // 각 값의 앞뒤 공백 제거
+      const values = line.split(',').map(value => value.trim());
+      
+      const categoryMajor = values[categoryMajorIdx];
+      const categoryMiddle = values[categoryMiddleIdx];
+      
+      if (!categoryMajor || !categoryMiddle) {
+        console.warn(`행 ${i + 1}: 범죄 대분류 또는 중분류가 없습니다. 건너뜁니다.`);
+        continue;
+      }
+      
+      // 시간대별 데이터 파싱
+      const timeSlots: Record<TimeSlot, number> = {} as Record<TimeSlot, number>;
+      let timeSlotTotal = 0;
+      
+      for (const { slot, idx } of timeSlotColumns) {
+        const count = parseInt(values[idx] || '0', 10);
+        if (isNaN(count)) {
+          console.warn(`행 ${i + 1}, 시간대 ${slot}: 숫자 변환 실패. 0으로 처리합니다.`);
+        }
+        timeSlots[slot] = isNaN(count) ? 0 : count;
+        timeSlotTotal += isNaN(count) ? 0 : count;
+      }
+      
+      // 요일별 데이터 파싱
+      const daysOfWeekData: Record<DayOfWeek, number> = {} as Record<DayOfWeek, number>;
+      let dayTotal = 0;
+      
+      for (const { day, idx } of dayColumns) {
+        const count = parseInt(values[idx] || '0', 10);
+        if (isNaN(count)) {
+          console.warn(`행 ${i + 1}, 요일 ${day}: 숫자 변환 실패. 0으로 처리합니다.`);
+        }
+        daysOfWeekData[day] = isNaN(count) ? 0 : count;
+        dayTotal += isNaN(count) ? 0 : count;
+      }
+      
+      records.push({
+        categoryMajor,
+        categoryMiddle,
+        timeSlots,
+        daysOfWeek: daysOfWeekData,
+        total: timeSlotTotal + dayTotal,
+      });
+    }
+    
+    if (records.length === 0) {
+      throw new Error('CSV 파일에서 유효한 데이터를 찾을 수 없습니다.');
+    }
+    
+    return records;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`데이터 파싱 중 오류가 발생했습니다: ${error.message}`);
+    }
+    throw new Error('알 수 없는 오류가 발생했습니다.');
   }
-  
-  return records;
 }
 
 // 대시보드 통계 계산
