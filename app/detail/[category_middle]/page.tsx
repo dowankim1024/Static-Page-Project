@@ -24,7 +24,11 @@ interface DetailPageProps {
 // 동적 메타데이터 생성
 export async function generateMetadata({ params }: DetailPageProps): Promise<Metadata> {
   const { category_middle } = await params;
-  const categoryName = decodeURIComponent(category_middle);
+  // Next.js가 자동으로 디코딩하므로 decodeURIComponent 불필요
+  // 이중 인코딩 방지를 위해 안전하게 처리
+  const categoryName = category_middle.includes('%') 
+    ? decodeURIComponent(category_middle) 
+    : category_middle;
   
   const records = parseCrimeData();
   const crimeData = findCrimeByCategoryMiddle(records, categoryName);
@@ -58,8 +62,9 @@ export async function generateStaticParams() {
   const records = parseCrimeData();
   const categoryMiddleList = extractCategoryMiddleList(records);
   
+  // Next.js가 자동으로 URL 인코딩을 처리하므로 인코딩하지 않음
   return categoryMiddleList.map((categoryMiddle) => ({
-    category_middle: encodeURIComponent(categoryMiddle),
+    category_middle: categoryMiddle,
   }));
 }
 
