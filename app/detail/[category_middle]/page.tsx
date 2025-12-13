@@ -1,8 +1,16 @@
 import { parseCrimeData, findCrimeByCategoryMiddle, calculateAverageStats } from '@/lib/csvParser';
+import {
+  convertCrimeRecordsToTableData,
+  convertCrimeRecordToTimeSlotData,
+  convertCrimeRecordToDayOfWeekData,
+  formatTimeSlotLabel,
+  extractCategoryMiddleList,
+} from '@/lib/dataFormatters';
+import ChartCard from '@/components/ChartCard';
+import CrimeSelector from '@/components/CrimeSelector';
 import BarChart from '@/components/charts/BarChart';
 import LineChart from '@/components/charts/LineChart';
 import ComparisonChart from '@/components/charts/ComparisonChart';
-import { TimeSlotData, DayOfWeekData } from '@/types/crime';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
@@ -11,6 +19,19 @@ interface DetailPageProps {
     category_middle: string;
   }>;
 }
+
+// 정적 페이지 생성을 위한 경로 생성
+export async function generateStaticParams() {
+  const records = parseCrimeData();
+  const categoryMiddleList = extractCategoryMiddleList(records);
+  
+  return categoryMiddleList.map((categoryMiddle) => ({
+    category_middle: encodeURIComponent(categoryMiddle),
+  }));
+}
+
+// generateStaticParams에 없는 경로는 404 반환 (완전한 SSG 보장)
+export const dynamicParams = false;
 
 export default async function DetailPage({ params }: DetailPageProps) {
   const { category_middle } = await params;
@@ -30,28 +51,14 @@ export default async function DetailPage({ params }: DetailPageProps) {
   // 전체 평균 계산
   const averageStats = calculateAverageStats(records);
   
+  // 범죄 목록 데이터 (드롭다운용)
+  const crimeListData = convertCrimeRecordsToTableData(records);
+  
   // 해당 범죄의 시간대별 데이터 포맷팅
-  const timeSlotData: TimeSlotData[] = [
-    '0시00분-02시59분',
-    '03시00분-05시59분',
-    '06시00분-08시59분',
-    '09시00분-11시59분',
-    '12시00분-14시59분',
-    '15시00분-17시59분',
-    '18시00분-20시59분',
-    '21시00분-23시59분',
-  ]
-    .map((slot) => ({
-      time: slot,
-      count: crimeData.timeSlots[slot as keyof typeof crimeData.timeSlots] || 0,
-    }));
+  const timeSlotData = convertCrimeRecordToTimeSlotData(crimeData);
   
   // 해당 범죄의 요일별 데이터 포맷팅
-  const dayOrder: Array<'일' | '월' | '화' | '수' | '목' | '금' | '토'> = ['일', '월', '화', '수', '목', '금', '토'];
-  const dayOfWeekData: DayOfWeekData[] = dayOrder.map((day) => ({
-    day,
-    count: crimeData.daysOfWeek[day] || 0,
-  }));
+  const dayOfWeekData = convertCrimeRecordToDayOfWeekData(crimeData);
 
   return (
     <div className="bg-gray-50">
@@ -59,12 +66,15 @@ export default async function DetailPage({ params }: DetailPageProps) {
         <div className="bg-white rounded-lg shadow-md p-8">
           {/* Header */}
           <div className="mb-6">
-            <Link
-              href="/dashboard"
-              className="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-block"
-            >
-              ← 대시보드로 돌아가기
-            </Link>
+            <div className="flex items-center justify-between mb-4">
+              <Link
+                href="/dashboard"
+                className="text-sm text-gray-500 hover:text-gray-700 inline-block"
+              >
+                ← 대시보드로 돌아가기
+              </Link>
+              <CrimeSelector crimes={crimeListData} currentCrime={categoryName} />
+            </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               {categoryName} 범죄 분석 보고서
             </h1>
@@ -86,13 +96,11 @@ export default async function DetailPage({ params }: DetailPageProps) {
           {/* 비교 차트 섹션 */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
             {/* 요일별 비교 차트 */}
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                요일별 비교 (전체 평균 vs {categoryName})
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                전체 범죄 평균과 {categoryName} 범죄의 요일별 발생 패턴을 비교합니다.
-              </p>
+            <ChartCard
+              title={`요일별 비교 (전체 평균 vs ${categoryName})`}
+              description={`전체 범죄 평균과 ${categoryName} 범죄의 요일별 발생 패턴을 비교합니다.`}
+              variant="comparison"
+            >
               <div className="h-64">
                 <ComparisonChart
                   data={dayOfWeekData}
@@ -103,16 +111,14 @@ export default async function DetailPage({ params }: DetailPageProps) {
                   averageLabel="전체 평균"
                 />
               </div>
-            </div>
+            </ChartCard>
 
             {/* 시간대별 비교 차트 */}
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                시간대별 비교 (전체 평균 vs {categoryName})
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                전체 범죄 평균과 {categoryName} 범죄의 시간대별 발생 패턴을 비교합니다.
-              </p>
+            <ChartCard
+              title={`시간대별 비교 (전체 평균 vs ${categoryName})`}
+              description={`전체 범죄 평균과 ${categoryName} 범죄의 시간대별 발생 패턴을 비교합니다.`}
+              variant="comparison"
+            >
               <div className="h-64">
                 <ComparisonChart
                   data={timeSlotData}
@@ -123,16 +129,13 @@ export default async function DetailPage({ params }: DetailPageProps) {
                   averageLabel="전체 평균"
                 />
               </div>
-            </div>
+            </ChartCard>
           </div>
 
           {/* 개별 차트 섹션 */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
             {/* 요일별 발생 현황 */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                {categoryName} 요일별 발생 현황
-              </h3>
+            <ChartCard title={`${categoryName} 요일별 발생 현황`}>
               <div className="h-64">
                 <BarChart
                   data={dayOfWeekData}
@@ -140,17 +143,14 @@ export default async function DetailPage({ params }: DetailPageProps) {
                   xAxisKey="day"
                 />
               </div>
-            </div>
+            </ChartCard>
 
             {/* 시간대별 발생 현황 */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                {categoryName} 시간대별 발생 현황
-              </h3>
+            <ChartCard title={`${categoryName} 시간대별 발생 현황`}>
               <div className="h-64">
                 <LineChart data={timeSlotData} />
               </div>
-            </div>
+            </ChartCard>
           </div>
 
           {/* 상세 데이터 테이블 */}
@@ -218,9 +218,7 @@ export default async function DetailPage({ params }: DetailPageProps) {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {timeSlotData.map((timeSlot) => {
                         const percentage = ((timeSlot.count / crimeData.total) * 100).toFixed(1);
-                        const timeLabel = timeSlot.time
-                          .replace('시00분-', '-')
-                          .replace('시59분', '시');
+                        const timeLabel = formatTimeSlotLabel(timeSlot.time);
                         return (
                           <tr key={timeSlot.time} className="hover:bg-gray-50">
                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">

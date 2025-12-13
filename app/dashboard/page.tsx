@@ -2,6 +2,8 @@ import { parseCrimeData, calculateDashboardStats } from '@/lib/csvParser';
 import { convertCrimeRecordsToTableData, extractCategoryMiddleList } from '@/lib/dataFormatters';
 import SearchBar from '@/components/SearchBar';
 import CrimeList from '@/components/CrimeList';
+import StatCard from '@/components/StatCard';
+import ChartCard from '@/components/ChartCard';
 import BarChart from '@/components/charts/BarChart';
 import LineChart from '@/components/charts/LineChart';
 import PieChart from '@/components/charts/PieChart';
@@ -26,24 +28,9 @@ export default function Dashboard() {
         
         {/* 통계 요약 */}
         <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-3">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">전체 범죄 건수</h3>
-            <p className="text-3xl font-bold text-gray-900">
-              {stats.totalCrimes.toLocaleString()}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">범죄 유형 수</h3>
-            <p className="text-3xl font-bold text-gray-900">
-              {records.length}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">범죄 대분류 수</h3>
-            <p className="text-3xl font-bold text-gray-900">
-              {stats.categoryMajorTotals.length}
-            </p>
-          </div>
+          <StatCard label="전체 범죄 건수" value={stats.totalCrimes} />
+          <StatCard label="범죄 유형 수" value={records.length} />
+          <StatCard label="범죄 대분류 수" value={stats.categoryMajorTotals.length} />
         </div>
         
         {/* Search Bar with Autocomplete */}
@@ -54,8 +41,7 @@ export default function Dashboard() {
         {/* Charts Section */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
           {/* 요일별 발생 현황 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">요일별 발생 현황</h2>
+          <ChartCard title="요일별 발생 현황">
             <div className="h-64">
               <BarChart 
                 data={stats.dayOfWeekTotals}
@@ -63,24 +49,22 @@ export default function Dashboard() {
                 xAxisKey="day"
               />
             </div>
-          </div>
+          </ChartCard>
 
           {/* 시간대별 발생 현황 */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">시간대별 발생 현황</h2>
+          <ChartCard title="시간대별 발생 현황">
             <div className="h-64">
               <LineChart data={stats.timeSlotTotals} />
             </div>
-          </div>
+          </ChartCard>
         </div>
 
         {/* 범죄 대분류 비중 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">범죄 대분류 비중</h2>
+        <ChartCard title="범죄 대분류 비중">
           <div className="h-96">
             <PieChart data={stats.categoryMajorTotals} />
           </div>
-        </div>
+        </ChartCard>
 
         {/* 범죄 목록 리스트 (테이블) */}
         <div className="mb-8">
